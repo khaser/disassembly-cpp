@@ -1,0 +1,53 @@
+\documentclass[14pt, russian, onesize]{extreport}
+% BASE
+\usepackage[a4paper, margin=0.5in]{geometry}
+\usepackage{dingbat} % NICE LINEBREAK
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{amsfonts}
+\usepackage{extarrows}
+\usepackage{import}
+\usepackage{indentfirst}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{indentfirst}
+\usepackage{color}
+\usepackage{minted}
+\usepackage{enumitem}
+% FONTS XeLaTeX
+\usepackage[no-math]{fontspec}
+\usepackage{mathspec}
+\defaultfontfeatures{Ligatures={TeX},Renderer=Basic}
+\setmathfont(Digits){Times New Roman}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Courier New}
+\newfontfamily\cyrillicfont[Script=Cyrillic]{Times New Roman}
+\newfontfamily\cyrillicfontsf[Script=Cyrillic]{Arial}
+\newfontfamily\cyrillicfonttt[Script=Cyrillic]{Courier New}
+\usepackage{polyglossia}
+\setdefaultlanguage{russian}
+% MACRO
+\delimitershortfall-1sp
+\newcommand\abs[1]{\left|#1\right|}
+
+% LISTINGS
+\definecolor{bg}{rgb}{0.95, 0.95, 0.95}
+\newminted{cpp}{ fontsize=\scriptsize, bgcolor=bg, breakafter=, breaklines, breakautoindent=true, breaksymbolleft=\raisebox{0.8ex}{ \small\reflectbox{\carriagereturn}}, breaksymbolright=\small\carriagereturn, }
+\newmintedfile{cpp}{linenos, fontsize=\scriptsize, bgcolor=bg, breaklines, breakafter=,}
+\newenvironment{code}{\captionsetup{type=listing}}{}
+
+\begin{document}
+\begin{tabular}{|p{8cm}|p{3cm}|p{3cm}|}
+    \hline
+    Лабораторная работа №3 & Б10 & 2022\\
+    \hline
+    Моделирование схем в Verilog  & \multicolumn{2}{|c|}{Хорохорин Андрей Сергеевич}\\
+    \hline
+\end{tabular}
+
+
+\end{document}
