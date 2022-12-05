@@ -1,0 +1,197 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [ feedback ]
+    types: [ opened, reopened ]
+  
+env:
+  COMPILER: "clang++"
+  C_ARGS: "-std=c++20 -D _CRT_SECURE_NO_WARNINGS -D _USE_MATH_DEFINES -O2"
+  C_FILES: "-I .. $((Get-ChildItem -Path .. -Include @('*.c', '*.cpp') -Recurse -ErrorAction SilentlyContinue -Force).FullName)"
+  ELF: ".github/workflows/test_elf"
+  READELF: ".github/workflows/read_disasm.txt"
+  OBJDUMP: ".github/workflows/dump_disasm.txt"
+  BUILDLOG: "build.log"
+  OUTLOG: "result.log"
+
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  buildtest:
+    if: (github.actor == 'RonoveRaum') || (github.run_number < 16)   
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-22.04] 
+    
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+
+    env:
+      EXE: rcv$(If ('${{ matrix.os }}' -eq 'windows-latest') {".exe"} Else {".out"})
+      EXE_EXT: If ('${{ matrix.os }}' -eq 'windows-latest') {".exe"} Else {".out"}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: test_answers
+        id: test_answers
+        shell: pwsh
+        run: | 
+          echo "log_readelf<<EOF" >> $env:GITHUB_OUTPUT
+          echo "$($(Get-Content ${{env.READELF}} -Raw))" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+          
+          echo "log_objdump<<EOF" >> $env:GITHUB_OUTPUT
+          echo "$($(Get-Content ${{env.OBJDUMP}} -Raw))" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT  
+          
+      - name: build
+        id: build
+        run: |
+          [void](mkdir __build)
+          cd __build 
+          try {
+            $ErrorActionPreference = 'SilentlyContinue'
+            pwsh -Command {
+              ${{env.COMPILER}} ${{env.C_ARGS}} ${{env.C_FILES}} -o ${{env.EXE}} *>&1 > ${{env.BUILDLOG}}
+            } 
+          
+          } catch {
+            Write-Output "build failed!"
+
+          } finally {
+            $exit_code = $LastExitCode
+            echo "build_exit_code=$exit_code" >> $env:GITHUB_OUTPUT
+
+            if (Test-Path ${{env.BUILDLOG}} -PathType Leaf) 
+            {
+              $blog="$(Get-Content ${{env.BUILDLOG}} -Raw)"
+            } else {
+              $blog=""
+            }
+            
+            echo "blog<<EOF" >> $env:GITHUB_OUTPUT
+            echo "$blog" >> $env:GITHUB_OUTPUT
+            echo "EOF" >> $env:GITHUB_OUTPUT
+
+            "::group::Build log"
+            echo $blog
+            echo "::endgroup::"  
+          }
+          exit(0)
+            
+
+      - name: update_readme_build
+        id: update_readme_build
+        if: (matrix.os == 'ubuntu-22.04')
+        uses: theboi/github-update-readme@v1.3.0  
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
+        with: 
+          customReadmeFile: |
+            # Test log
+           
+            ## More info in Github.Actions: [![statusbadge](../../actions/workflows/buildtest.yml/badge.svg?branch=main&event=pull_request)](../../actions/workflows/buildtest.yml)
+                    
+            ### Compile failed (build log):
+            ```
+            ${{ steps.build.outputs.blog }}
+            ```
+            
+            ### Test output:
+            Readelf
+            ```
+            ${{ steps.test_answers.outputs.log_readelf }}
+            ```
+
+            Objdump
+            ```
+            ${{ steps.test_answers.outputs.log_objdump }}
+            ```
+
+      - name: get_dump
+        id: get_dump
+        run: |  
+          if ((${{steps.build.outputs.build_exit_code}} -ne 0))
+          {
+            exit(1)
+          }
+
+          cd __build 
+
+          "::group::Output log"
+
+          $z = ${{ env.EXE_EXT }}
+          $exe = "./rcv$($z)"
+          & ./$exe ../${{env.ELF}} ${{env.OUTLOG}} 2>&1 > stdouterr.log
+          
+          $tlog=""
+          if ((Get-ChildItem -Path stdouterr.log).Length -ne 0) 
+          { 
+            $tlog+="[ERROR] $(Get-Content stdouterr.log -Raw) Stdout and stderr must be empty"
+          }            
+          else 
+          {
+            if (-not (& Test-Path -Path ${{env.OUTLOG}} -PathType Leaf))
+            {
+              $tlog+="[ERROR] Output file does not exist"
+            }           
+            else 
+            {
+              if ((Get-ChildItem -Path ${{env.OUTLOG}}).Length -eq 0) 
+              {
+                $tlog+="[ERROR] Output file is empty"
+              }
+              else
+              {
+                $tlog+="$(Get-Content ${{env.OUTLOG}} -Raw)" 
+              } 
+            }  
+          }
+
+          echo $tlog  
+          echo "tlog<<EOF" >> $env:GITHUB_OUTPUT
+          echo "$tlog" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+          
+
+      - name: update_readme
+        id: update_readme
+        if: matrix.os == 'ubuntu-22.04'
+        uses: theboi/github-update-readme@v1.3.0  
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
+        with: 
+          customReadmeFile: |
+            # Test log
+           
+            ## More info in Github.Actions: [![statusbadge](../../actions/workflows/buildtest.yml/badge.svg?branch=main&event=pull_request)](../../actions/workflows/buildtest.yml)
+                    
+                    
+            ### Compile complited (build log, can be empty):
+            ```
+            ${{ steps.build.outputs.blog }}
+            ```
+            
+            ### Output:
+            ```
+            ${{ steps.get_dump.outputs.tlog }}
+            ```
+            
+            ### Test output:
+            Readelf
+            ```
+            ${{ steps.test_answers.outputs.log_readelf }}
+            ```
+
+            Objdump
+            ```
+            ${{ steps.test_answers.outputs.log_objdump }}
+            ```
+            
+          
