@@ -1,4 +1,5 @@
 \documentclass[14pt, russian, onesize]{extreport}
+
 % BASE
 \usepackage[a4paper, margin=0.5in]{geometry}
 \usepackage{dingbat} % NICE LINEBREAK
@@ -11,12 +12,16 @@
 \usepackage{import}
 \usepackage{indentfirst}
 \usepackage{caption}
+\captionsetup{justification=raggedright,singlelinecheck=false}
 \usepackage{subcaption}
 \usepackage{hyperref}
 \usepackage{indentfirst}
 \usepackage{color}
 \usepackage{minted}
 \usepackage{enumitem}
+\usepackage{xparse}
+\usepackage{etoolbox}
+
 % FONTS XeLaTeX
 \usepackage[no-math]{fontspec}
 \usepackage{mathspec}
@@ -24,30 +29,334 @@
 \setmathfont(Digits){Times New Roman}
 \setmainfont{Times New Roman}
 \setsansfont{Arial}
-\setmonofont{Courier New}
+\setmonofont{Consolas}
 \newfontfamily\cyrillicfont[Script=Cyrillic]{Times New Roman}
 \newfontfamily\cyrillicfontsf[Script=Cyrillic]{Arial}
-\newfontfamily\cyrillicfonttt[Script=Cyrillic]{Courier New}
+\newfontfamily\cyrillicfonttt[Script=Cyrillic]{Consolas}
 \usepackage{polyglossia}
 \setdefaultlanguage{russian}
+
+
 % MACRO
 \delimitershortfall-1sp
 \newcommand\abs[1]{\left|#1\right|}
 
 % LISTINGS
-\definecolor{bg}{rgb}{0.95, 0.95, 0.95}
+\definecolor{bg}{rgb}{1,1,1}
 \newminted{cpp}{ fontsize=\scriptsize, bgcolor=bg, breakafter=, breaklines, breakautoindent=true, breaksymbolleft=\raisebox{0.8ex}{ \small\reflectbox{\carriagereturn}}, breaksymbolright=\small\carriagereturn, }
 \newmintedfile{cpp}{linenos, fontsize=\scriptsize, bgcolor=bg, breaklines, breakafter=,}
 \newenvironment{code}{\captionsetup{type=listing}}{}
 
+% BASH
+
+\ExplSyntaxOn
+\NewDocumentCommand{\captureshell}{som}
+ {
+  \sdaau_captureshell:Ne \l__sdaau_captureshell_out_tl { #3 }
+  \IfBooleanT { #1 }
+   {% we may need to stringify the result
+    \tl_set:Nx \l__sdaau_captureshell_out_tl
+     { \tl_to_str:N \l__sdaau_captureshell_out_tl }
+   }
+  \IfNoValueTF { #2 }
+   {
+    \tl_use:N \l__sdaau_captureshell_out_tl
+   }
+   {
+    \tl_set_eq:NN #2 \l__sdaau_captureshell_out_tl
+   }
+ }
+
+\tl_new:N \l__sdaau_captureshell_out_tl
+
+\cs_new_protected:Nn \sdaau_captureshell:Nn
+ {
+  \sys_get_shell:nnN { #2 } { } #1
+  \tl_trim_spaces:N #1 % remove leading and trailing spaces
+ }
+\cs_generate_variant:Nn \sdaau_captureshell:Nn { Ne }
+\ExplSyntaxOff
+
+\newcommand\ProcessOutput[1]{%
+  \renewcommand*{\do}[1]{
+      \begin{code}
+          \caption{\textbf{##1}}
+          \cppfile{##1}
+      \end{code}
+  }%
+  \expandafter\docsvlist\expandafter{#1}%
+}
+\parindent=0pt
+
+\makeatletter
+\def\inputAllFiles#1#2{%
+    \captureshell*[\cppfiles]{ls #1/*.#2 | paste -sd , -} 
+    \ProcessOutput\cppfiles
+}
+\makeatother
+
+% HYPERLINKS
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+
+% START
 \begin{document}
 \begin{tabular}{|p{8cm}|p{3cm}|p{3cm}|}
     \hline
     Лабораторная работа №3 & Б10 & 2022\\
     \hline
-    Моделирование схем в Verilog  & \multicolumn{2}{|c|}{Хорохорин Андрей Сергеевич}\\
+    ISA  & \multicolumn{2}{|c|}{Хорохорин Андрей Сергеевич}\\
     \hline
 \end{tabular}
+\subsection*{ Цель работы }
+Знакомство с архитектурой набора команд RISC-V 
+\subsection*{ Инструментарий }
+\begin{enumerate}
+    \item \captureshell{clang++ --version | head -n 1}
+    \item \captureshell{vim --version | head -n 1}
+    \item \captureshell{make --version | head -n 1}
+    \item \captureshell{xelatex --version | head -n 1}
+\end{enumerate}
 
+% В пункте 3 опишите что из себя представляет ISA RISC-V, что она описывает,
+% какой это вид ISA, как в ней кодируются команды и регистры.
+% Подробнее стоит остановится на тех наборах команд, которые вам выданы по заданию 
+% (про остальные можно написать буквально 1-2 предложения, больше не нужно).
+\section*{Описание системы кодирования команд RISC-V}
+\subsection*{Общая структура ISA}
+Стандарт RISC-V декларирует 4 минимальных ISA для 32, 64 и даже 128 битных систем,
+а также множество ISA-расширений для них.
+RISC-V может быть расширена и при помощи сторонних, не входящих в стандарт RISC-V.
+Это достигается некоторой избыточностью кодирования команд и резервированием 
+некоторых кодов команд для сторонних команд-расширений.
+
+Стандарт написан таким образом, чтобы RISC-V можно было реализовать 
+не только в виде процессора, поддерживающего эту ISA, но и как программный 
+эмулятор. Любую сущность поддерживающую описанный набор инструкций называют
+платформой RISC-V. Вне зависимости от платформы логически есть только
+одно адресное пространство, которое может как дизъюнктно объединять несколько 
+присутствующих физических, так и объединять имея некоторое не пустое пересечение
+адресных пространств.
+
+Базовая ISA предполагает 32 битное кодирование для всех команд, что оправдывает
+название архитектуры, но стандарт также позволят использовать кодирование
+с переменной длинной инструкции, но необходимо, чтобы длина каждой
+была кратна 16 битам.
+
+Отдельно стоит отметить, что некоторые стандарты уже утверждены и не могут быть изменены
+в будущем, как например разрабатываемая нами RV32I, RV32M, в то же время
+есть стандарты, которые могут быть изменены в будущем.
+
+Для примера устройства базовой ISA, к которой уже в дальнейшем
+будут накладываться улучшения, возьмём RV32I. Остальные базовые
+ISA отличаются главным образом количеством и размеров регистров.
+
+\subsection*{Устройство базовой ISA на примере RV32I}
+В RV32I в пользование программиста предоставляется 32 регистра, каждый
+из которых размера 32 бита. Один из регистров имеет особенность: его
+содержимое всегда равно нулю, даже после записи в него. Помимо этого,
+есть ещё один регистр pc, основной целью которого является хранения
+места в памяти текущей исполняемой инструкции. Каждая из команд
+кодируется в двоичном виде. Для облегчения декодирования
+все команды разбиты на 6 типов, которые приведены в таблице ниже.
+
+\newcommand{\instbit}[1]{\mbox{\scriptsize #1}}
+\newcommand{\instbitrange}[2]{~\instbit{#1} \hfill \instbit{#2}~}
+\begin{figure}[h]
+\begin{small} \begin{center} \setlength{\tabcolsep}{4pt} \begin{tabular}{p{0.3in}@{}p{0.8in}@{}p{0.6in}@{}p{0.18in}@{}p{0.7in}@{}p{0.6in}@{}p{0.6in}@{}p{0.3in}@{}p{0.5in}l} \\ \multicolumn{1}{c}{\instbit{31}} & \instbitrange{30}{25} & \instbitrange{24}{21} & \multicolumn{1}{c}{\instbit{20}} & \instbitrange{19}{15} & \instbitrange{14}{12} & \instbitrange{11}{8} & \multicolumn{1}{c}{\instbit{7}} & \instbitrange{6}{0} \\ \cline{1-9} \multicolumn{2}{|c|}{funct7} & \multicolumn{2}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & R-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{4}{|c|}{imm[11:0]} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & I-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{2}{|c|}{imm[11:5]} & \multicolumn{2}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{2}{c|}{imm[4:0]} & \multicolumn{1}{c|}{opcode} & S-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{1}{|c|}{imm[12]} & \multicolumn{1}{c|}{imm[10:5]} & \multicolumn{2}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{1}{c|}{imm[4:1]} & \multicolumn{1}{c|}{imm[11]} & \multicolumn{1}{c|}{opcode} & B-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{6}{|c|}{imm[31:12]} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & U-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{1}{|c|}{imm[20]} & \multicolumn{2}{c|}{imm[10:1]} & \multicolumn{1}{c|}{imm[11]} & \multicolumn{2}{c|}{imm[19:12]} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & J-type \\ \cline{1-9} \end{tabular} \end{center} \end{small} \caption{Виды инструкций RISC-V} \label{fig:baseinstformatsimm}
+\end{figure}
+
+Заметим, что типы U,J и B,S почти совпадают. Они существуют для кодирования
+команд, где данные imm точно делится на 2, позволяет передать один
+дополнительный старший бит. А такая странная адресация в B, J сделана
+из-за того, что аппаратно легче записать один бит, чем записывать
+один бит и делать битовый сдвиг всего imm, чтобы кодировать в imm[12:6], imm[5:1].
+
+В таблице выше за rd обозначен регистр
+куда сохранять результат команды, а за rs~--- из какого регистра считывать данные.
+Из такой системы  кодирования следует,
+что данная архитектура относится к типу регистр-регистр. 
+Помимо этого заметим, что команды построены так, чтобы rd и rs всегда
+были на одном и том же месте, для того, чтобы облегчить их декодирование.
+
+Чтобы уже сейчас разобраться с типом нашей ISA скажу, что наша ISA 
+является Load-Store, что значит, что каждая операция либо производит
+какое-либо вычисление на ALU, либо работает с памятью, но ни в коем
+виде не делает это одновременно.
+
+\subsection*{Целочисленные арифметические инструкции}
+% TODO
+
+\subsection*{Инструкции управления исполнения}
+% TODO
+
+\subsection*{Инструкции для работы с памятью}
+% TODO
+
+\subsection*{Fence}
+% TODO
+
+\subsection*{Инструкции-подсказки исполнения}
+% TODO
+
+\subsection*{Инструкции-подсказки исполнения}
+% TODO
+
+\subsection*{Расширение RV32M}
+% TODO
+
+% Общее описание структуры ELF файлов. Подробно стоит расписать только те
+% секции, которые вам необходимо проанализировать в ходе выполнения работы.
+% Про другие в отчёте не нужно расписывать.
+\section*{Описание структуры файла ELF}
+ELF(Executable and Linkable Format)~--- бинарный формат файла предназначенный
+как для хранения как целых исполняемых файлов с машинным кодом и дополнительной
+информацией для его запуска, так и для хранения отдельных его частей, которые
+предварительно должны быть слинкованы, чтобы получить полноценный исполняемый
+файл. 
+
+Сам ELF файл состоит из 4 частей:
+\begin{itemize}
+    \item \textbf{Заголовок файла.}
+        Хранит в себе метаданные о файле и предполагаемом исполнителе,
+        а также информацию о расположении заголовков программ и заголовков секций.
+    \item \textbf{Заголовки программ.}
+        Служат для описания процесса выделения памяти до запуска программы. 
+        Может выставлять некоторые флаги, описывающие уровен доступа
+        к тому или иному участку памяти.
+    \item \textbf{Секции.}
+        Служат для хранения произвольных данных, начиная от кода программы
+        и таблицы символов, заканчивая инициализированными переменными.
+        Каждая из секций может иметь какую-либо структуру или не имеет
+        её вовсе. Это зависит от самой секции и прописано в документации.
+        Порядок секций внутри ELF файла не задан. Есть как обязательные
+        секции, без которых программа не запустится, так и опциональные.
+    \item \textbf{Заголовки секций.}
+        Задают расположение непосредственно секций внутри ELF файла,
+        а также их тип, для того, чтобы не определять его по ходу.
+\end{itemize}
+
+Для данной работы необходимо работать с двумя видами секций и заголовком файла,
+поэтому опишем их подробнее.
+\begin{itemize}
+    \item \textbf{Заголовок файла}\\
+        Всегда находится в самом начале файла и имеет следующие поля, которые
+        идут именно в перечисленном ниже порядке.
+        \begin{enumerate}
+            \item Первые 4 байта всегда хранят значение \texttt{7f 45 4c 46},
+                которые служат сигналом того, что данный файл следует
+                считать ELF файлом.
+            \item Следующий байт хранит информацию о разрядности архитектуры,
+                где значения 1 и 2 означают 32 и 64 битные архитектуры
+                соответственно.
+            \item Следующий байт аналогично предыдущему может иметь значение
+                либо 1 либо 2, означающие тип кодирования little endian
+                и big endian соответственно.
+            \item Следующий байт содержит версию стандарта файла ELF,
+                но на данный момент есть только одна версия.
+                Поэтому значение этого байта всегда будет равно 1.
+            \item Следующие 2 байт указывают на тип ABI(Application Binary Interface)
+                и его версию целевой операционной системы.
+            \item Следующие 7 байт зарезервированы под дальнейшее расширение
+                стандарта и не используются в данный момент.
+            \item 2 байта по адресу \texttt{0x10} указывают на тип объектного
+                файла ELF. Это поле необходимо, так как требования
+                к наличию различных секций у исполняемого файла и, например, 
+                динамической библиотеки различные.
+            \item 2 байта по адресу \texttt{0x12} указывают архитектуру
+                набора инструкций. RISC-V соответствует код \texttt{0xf3}.
+            \item 4 байта по адресу \texttt{0x14} указывает на версию ELF и равно
+                1 для актуальной версии ELF.
+            \item 4 байта по адресу \texttt{0x18} задаёт точку входа
+                в программу, то есть адрес первой исполняемой инструкции.
+            \item 4 байта по адресу \texttt{0x1C} задаёт адрес
+                начала таблицы заголовков программ.
+            \item 4 байта по адресу \texttt{0x20} задаёт адрес
+                начала таблицы заголовков секций.
+            \item 4 байта по адресу \texttt{0x24} оставлены для использования
+                в нуждах архитектуры и их содержимое зависит от неё.
+            \item 2 байта по адресу \texttt{0x28} хранят суммарный
+                размера заголовка файла. В 32 битном случае он равен 52.
+            \item 2 байта по адресу \texttt{0x2A} хранят размер одной записи
+                в таблице заголовков программ.
+            \item 2 байта по адресу \texttt{0x2C} хранят количество
+                записей в таблицу заголовков программ.
+            \item 2 байта по адресу \texttt{0x2E} хранят размер одной записи
+                в таблице заголовков секций.
+            \item 2 байта по адресу \texttt{0x30} хранят количество
+                записей в таблицу заголовков секций.
+            \item 2 байта по адресу \texttt{0x32} хранят индекс
+                секции с именами секций в таблице заголовков секций.
+        \end{enumerate}
+    \item \textbf{.text}
+        Секция непосредственно хранящая код программы. В стандарте
+        ELF ничего не декларируется о его структуре.
+    \item \textbf{.symtab}
+        Таблица с метками, необходимая для линковки, а именно для замены
+        ссылок, оставленных на этапе компиляции.
+        Представляет собой некоторое количество идущих подряд
+        записей, каждая из которых имеет следующий вид:
+        \begin{enumerate}
+            \item \textbf{st\_name}~--- хранит индекс внутри таблицы \textbf{.strtab},
+                в которой по этому индексу написано имя данной метки.
+            \item \textbf{st\_value}~--- хранит адрес того объекта, на который
+                указывает данная метка.
+            \item \textbf{st\_size}~--- хранит размер объекта, на который
+                ссылается метка. Может быть равен 0, что значит что объект
+                либо не имеет размера, либо его размер не известен.
+            \item \textbf{st\_info}~--- хранит тип объекта и связанные с ним
+                атрибуты, на который указывает
+                метка. 
+                Типичные объекты, на которые ссылается метка: структура данных,
+                функция, файл или даже секция ELF файла. Атрибуты указывают
+                на видимость данной метки при линковке текущего файла с
+                другими.
+                Тип и атрибуты специфицируется согласно стандарту ELF.
+                Объект может не иметь ни типа ни аттрибутов.
+            \item \textbf{st\_other}~--- используется для указания
+                области видимости данной метки.
+
+            \item \textbf{st\_shndx}~--- указывает секцию в которой 
+                 используется данная ссылка. Помимо обычных значений
+                 может встретиться два следующих значения, определённых
+                 в стандарте ELF
+                 \begin{itemize}
+                     \item \texttt{SHN\_ABS(0xfff1)}~--- данная метка является 
+                         глобальной.
+                     \item \texttt{SHN\_UNDEF(0)}~--- информация отсутствует.
+                 \end{itemize}
+
+        \end{enumerate}
+\end{itemize}
+
+% Вы самостоятельно парсите файл и декодируете инструкции. Использовать
+% готовые решения по парсингу ELF файлов нельзя.
+\section*{Описание работы написанного кода}
+
+\section*{Результат работы написанной программы}
+
+% Если вы пользовались каким-то источниками информации, то в
+% пункте 7 нужно оставить ссылки на эти интернет-ресурсы.
+\section*{Список источников}
+\begin{itemize}
+    \item \href{https://riscv.org/technical/specifications/}{Спецификация RISC-V}
+    \item \href{https://en.wikipedia.org/wiki/Addressing_mode#Simple_addressing_modes_for_data}
+        {Статья на википедии про адресацию в машинных языках}
+    \item \href{https://tech-geek.ru/elf-files-linux/}
+        {Краткое описание структуры ELF файла}
+    \item \href{https://refspecs.linuxfoundation.org/elf/elf.pdf}
+        {Спецификация ELF файла}
+
+\end{itemize}
+
+\section*{Листинг кода}
+
+\inputAllFiles{../src}{cpp}
+
+\inputAllFiles{../include}{h}
 
 \end{document}
