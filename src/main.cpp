@@ -12,14 +12,16 @@
 #include <vector>
 #include <string>
 #include <iterator>
+#include <cstdio>
 
 int main(int argc, char* argv[]) {
 
-    if (argc != 2) {
+    if (argc != 3) {
         std::cout << "Usage: rv3 <elf_input_file_name> <output_file_name>\n";
         return 1;
     }
     std::ifstream fin((std::string) argv[1], std::ios::binary);
+    freopen(argv[2], "w", stdout);
 
     Header header = parse_header(fin);
     std::vector<SectionTableEntry> sectionTable =

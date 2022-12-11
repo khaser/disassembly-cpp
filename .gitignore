@@ -3,3 +3,4 @@ rv3
 compile_commands.json
 test_elf
 .cache
+output.dump

@@ -27,7 +27,7 @@ clean:
 	@rm -rf obj $(product_name)
 
 run: all
-	@./rv3 test_elf
+	@./rv3 test_elf output.dump
 
 
 .PHONY: clean build
