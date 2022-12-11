@@ -9,7 +9,8 @@
 #include <algorithm>
 #include <exception>
 
-std::string format_bind(unsigned char bind) {
+std::string format_bind(const unsigned char& info) {
+    unsigned char bind = (info>>4);
     if (bind == STB_LOCAL)
         return "LOCAL";
     else if (bind == STB_GLOBAL)
@@ -23,7 +24,8 @@ std::string format_bind(unsigned char bind) {
     throw std::invalid_argument("Undefined bind value");
 }
 
-std::string format_type(unsigned char type) {
+std::string format_type(const unsigned char& info) {
+    unsigned char type = (info&0xf);
     if (type == STT_NOTYPE)
         return "NOTYPE";
     else if (type == STT_OBJECT)
@@ -40,13 +42,6 @@ std::string format_type(unsigned char type) {
         return "HIPROC";
     throw std::invalid_argument("Undefined type value");
 }
-
-std::tuple<std::string,std::string> format_info(const unsigned char& info) {
-    unsigned char bind = (info>>4);
-    unsigned char type = (info&0xf);
-    return {format_bind(bind), format_type(type)};
-}
-
 
 std::string format_index(const Elf32_Half& idx) {
     if (idx == SHN_ABS) 
@@ -76,15 +71,24 @@ std::string format_vis(const unsigned char& st_other) {
     throw std::invalid_argument("Undefined visibility value");
 }
 
-void print_symtable(const std::vector<SymTableEntry>& symtable, std::string symbols) {
+std::string format_name(const Elf32_Word& name_offset, const std::string& symbols) {
+    return 
+        std::string (
+            symbols.begin() + name_offset,
+            find(symbols.begin() + name_offset, symbols.end(), '\0')
+        );
+}
+
+void print_symtable(
+        const std::vector<SymTableEntry>& symtable,
+        const std::string& symbols) {
+    printf("Symbol Value              Size Type     Bind     Vis       Index Name\n");
     for (size_t i = 0; i < symtable.size(); ++i) {
         const SymTableEntry &el = symtable[i];
-        auto [bind, type] = format_info(el.st_info);
+        std::string bind  = format_bind(el.st_info);
+        std::string type  = format_type(el.st_info);
         std::string index(format_index(el.st_shndx));
-        std::string name(
-                        symbols.begin() + el.st_name,
-                        find(symbols.begin() + el.st_name, symbols.end(), '\0')
-                        );
+        std::string name = format_name(el.st_name, symbols);
         std::string vis(format_vis(el.st_other));
         printf("[%4zu] 0x%-15X %5i %-8s %-8s %-8s %6s %s\n", 
                 i, el.st_value, el.st_size, type.c_str(), bind.c_str(),
