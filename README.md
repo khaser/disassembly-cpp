@@ -4,7 +4,6 @@
         
 ### Compile failed (build log):
 ```
-clang: error: no input files
 
 ```
 
