@@ -2,8 +2,7 @@ CC = clang++
 src_dir = src
 obj_dir = obj
 header_dir = include
-# flags = -std=c++20 -D _CRT_SECURE_NO_WARNINGS -D _USE_MATH_DEFINES -Wall -Werror -Wextra -O2 -I $(header_dir)
-flags = -std=c++20 -D _CRT_SECURE_NO_WARNINGS -D _USE_MATH_DEFINES -Wall -Wextra -O2 -I $(header_dir)
+flags = -std=c++20 -D _CRT_SECURE_NO_WARNINGS -D _USE_MATH_DEFINES -Wall -Werror -Wextra -O2 -I $(header_dir)
 
 headers = $(wildcard $(header_dir)/*.hpp)
 sources = $(wildcard $(src_dir)/*.cpp)

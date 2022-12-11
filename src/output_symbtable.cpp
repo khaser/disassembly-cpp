@@ -1,4 +1,4 @@
-#include "output.h"
+#include "output_symbtable.h"
 #include "elfsymbtable.h"
 #include "typedefs.h"
 

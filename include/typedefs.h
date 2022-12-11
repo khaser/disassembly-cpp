@@ -46,5 +46,17 @@ const unsigned short SHN_UNDEF = 0;
 
 #define STV_NUM        7
 
+// Op codes
+const unsigned char LUI    = 0b0110111;
+const unsigned char AUIPC  = 0b0010111;
+const unsigned char JAL    = 0b1101111;
+const unsigned char JALR   = 0b1100111;
+const unsigned char BRANCH = 0b1100011;
+const unsigned char LOAD   = 0b0000011;
+const unsigned char STORE  = 0b0100011;
+const unsigned char ARITHI = 0b0010011;
+const unsigned char ARITH  = 0b0110011;
+const unsigned char FENCE  = 0b0001111;
+const unsigned char EX_CTR = 0b1110011;
 
 #endif
