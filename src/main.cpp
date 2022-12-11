@@ -12,12 +12,38 @@
 #include <string>
 #include <iterator>
 
+void extend_sign(int& x, int sz) {
+    for (; sz < 32; ++sz) {
+        if (x & (1ll << sz)) {
+            x |= (1ll << (sz + 1));
+        }
+    }
+}
+
 void print_code(
         const std::string& code,
         const std::string& symbols,
         std::vector<SymTableEntry> symtab,
         Elf32_Addr v_addr
     );
+
+std::string prettify_reg(unsigned char reg) {
+    if (reg >= 32) throw std::logic_error("Accessing to non-existent register");
+    std::vector<std::string> names = {
+        "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1",
+    };
+    for (int i = 0; i <= 7; ++i) {
+        names.push_back("a" + std::to_string(i));
+    }
+    for (int i = 2; i <= 11; ++i) {
+        names.push_back("s" + std::to_string(i));
+    }
+    for (int i = 3; i <= 6; ++i) {
+        names.push_back("t" + std::to_string(i));
+    }
+    return names[reg];
+}
+
 
 int main(int argc, char* argv[]) {
 
@@ -119,7 +145,7 @@ struct InstructionType {
 struct UType : public InstructionType {
     std::string cmd_name;
     unsigned char rd;
-    Elf32_Word imm;
+    int imm;
 
     UType(const Elf32_Word& cmd) : InstructionType(cmd) {
         rd = get_rd(cmd);
@@ -128,7 +154,7 @@ struct UType : public InstructionType {
     }
 
     void print() {
-        printf("%s %02hhx %x", cmd_name.c_str(), rd, imm);
+        printf("%7s\t%s, %x", cmd_name.c_str(), prettify_reg(rd).c_str(), imm);
     }
 
     ~UType() = default;
@@ -176,7 +202,8 @@ struct RType : public InstructionType {
     }
 
     void print() {
-        printf("%s %02hhx %02hhx %02hhx", cmd_name.c_str(), rd, rs1, rs2);
+        printf("%7s\t%s, %s, %s", cmd_name.c_str(), prettify_reg(rd).c_str(),
+                prettify_reg(rs1).c_str(), prettify_reg(rs2).c_str());
     }
 
     ~RType() = default;
@@ -187,13 +214,14 @@ struct SType : public InstructionType {
     unsigned char rs1;
     unsigned char rs2;
     unsigned char funct3;
-    Elf32_Word imm;
+    int imm;
 
     SType(const Elf32_Word& cmd) : InstructionType(cmd) {
         rs1 = get_rs1(cmd);
         rs2 = get_rs2(cmd);
         funct3 = get_funct3(cmd);
         imm = (get_blk(cmd, 7, 25) << 4) | get_blk(cmd, 4, 7);
+        extend_sign(imm, 11);
         switch (funct3) {
             case 0b000: cmd_name = "sb"; break;
             case 0b001: cmd_name = "sh"; break;
@@ -202,7 +230,8 @@ struct SType : public InstructionType {
     }
 
     void print() {
-        printf("%s %02hhx,%d(%02hhx)", cmd_name.c_str(), rs1, imm, rs2);
+        printf("%7s\t%s, %d(%s)", cmd_name.c_str(), prettify_reg(rs2).c_str(), imm,
+                prettify_reg(rs1).c_str());
     }
 
     ~SType() = default;
@@ -213,7 +242,7 @@ struct IType : public InstructionType {
     unsigned char rs1;
     unsigned char funct3;
     unsigned char rd;
-    Elf32_Word imm;
+    int imm;
     bool is_load = false;
     bool is_exec = false;
 
@@ -222,6 +251,7 @@ struct IType : public InstructionType {
         rs1 = get_rs1(cmd);
         funct3 = get_funct3(cmd);
         imm = get_blk(cmd, 12, 20);
+        extend_sign(imm, 11);
         if ((cmd & 0x7f) == EX_CTR) {
             is_exec = true;
             cmd_name = (imm & 1) ? "ebreak" : "ecall";
@@ -253,11 +283,14 @@ struct IType : public InstructionType {
 
     void print() {
         if (is_exec) {
-            printf("%s", cmd_name.c_str());
+            printf("%7s", cmd_name.c_str());
         } else if (is_load) {
-            printf("%s %02hhx,%d(%02hhx)", cmd_name.c_str(), rs1, imm, rd);
+            printf("%7s\t%s, %d(%s)", cmd_name.c_str(), prettify_reg(rd).c_str(),
+                    imm, prettify_reg(rs1).c_str());
         } else {
-            printf("%s %02hhx %02hhx %d", cmd_name.c_str(), rd, rs1, imm);
+            // ARITHI
+            printf("%7s\t%s, %s, %d", cmd_name.c_str(), prettify_reg(rd).c_str(), 
+                    prettify_reg(rs1).c_str(), imm);
         }
     }
 
@@ -279,7 +312,7 @@ struct JType : public InstructionType {
     }
 
     void print() {
-        printf("%s %02hhx %x", cmd_name.c_str(), rd, imm);
+        printf("%7s\t%s, %x", cmd_name.c_str(), prettify_reg(rd).c_str(), imm);
     }
 
     ~JType() = default;
@@ -311,11 +344,13 @@ struct BType : public InstructionType {
     }
 
     void print() {
-        printf("%s %02hhx,%02hhx,%d", cmd_name.c_str(), rs2, rs1, imm);
+        printf("%7s\t%s, %s, %x", cmd_name.c_str(), prettify_reg(rs2).c_str(), 
+                prettify_reg(rs1).c_str(), imm);
     }
 
     ~BType() = default;
 };
+
 
 void print_code(
         const std::string& code,
@@ -340,13 +375,14 @@ void print_code(
 
     for (size_t i = 0; i < code.size(); i += 4, v_addr += 4) {
         if (it->st_value == v_addr) {
-            printf("%08x   <%s>:\n", 
+            printf("%08x <%s>:\n", 
                     it->st_value, format_name(it->st_name, symbols).c_str());
             it++;
         }
         std::string cmd_str(code.begin() + i, code.begin() + i + 4);
         const char* buff = cmd_str.c_str();
         Elf32_Word cmd = *((Elf32_Word*)(buff));
+        printf("   %05x:\t%08x\t", v_addr, cmd);
 
         unsigned char opcode = cmd & 0x7f;
         InstructionType* parsed_cmd = nullptr;
@@ -369,7 +405,7 @@ void print_code(
             parsed_cmd->print();
             delete parsed_cmd;
         } else {
-            printf("undef");
+            printf("unknown_instruction");
         }
         printf("\n");
 
