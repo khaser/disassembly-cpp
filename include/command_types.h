@@ -2,11 +2,19 @@
 #define COMMAND_TYPES_GUARD
 
 #include "typedefs.h"
+#include "elfsymbtable.h"
+
 #include <string>
+#include <vector>
 
 struct InstructionType {
     unsigned char opcode;
-    InstructionType(const Elf32_Word& cmd);
+    Elf32_Addr pc;
+    const std::vector<SymTableEntry>& functions;
+    const std::string& symbols;
+    
+    InstructionType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+            const std::vector<SymTableEntry>& functions, const std::string& symbols);
 
     unsigned char get_rd(Elf32_Word x);
 
@@ -22,6 +30,8 @@ struct InstructionType {
 
     unsigned char get_cmd(Elf32_Word x);
 
+    std::string format_addr(const Elf32_Addr &x);
+
     Elf32_Word get_blk(Elf32_Word x, unsigned char len, unsigned char pos);
 
     virtual void print() = 0;
@@ -34,7 +44,8 @@ struct UType : public InstructionType {
     unsigned char rd;
     int imm;
 
-    UType(const Elf32_Word& cmd);
+    UType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+            const std::vector<SymTableEntry>& functions, const std::string& symbols);
 
     void print();
 
@@ -49,7 +60,8 @@ struct RType : public InstructionType {
     unsigned char funct3;
     unsigned char funct7;
 
-    RType(const Elf32_Word& cmd);
+    RType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+            const std::vector<SymTableEntry>& functions, const std::string& symbols);
 
     void print();
 
@@ -63,7 +75,8 @@ struct SType : public InstructionType {
     unsigned char funct3;
     int imm;
 
-    SType(const Elf32_Word& cmd);
+    SType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+            const std::vector<SymTableEntry>& functions, const std::string& symbols);
 
     void print();
 
@@ -77,9 +90,11 @@ struct IType : public InstructionType {
     unsigned char rd;
     int imm;
     bool is_load = false;
+    bool is_jump = false;
     bool is_exec = false;
 
-    IType(const Elf32_Word& cmd);
+    IType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+            const std::vector<SymTableEntry>& functions, const std::string& symbols);
 
     void print(); 
 
@@ -89,9 +104,10 @@ struct IType : public InstructionType {
 struct JType : public InstructionType {
     std::string cmd_name;
     unsigned char rd;
-    Elf32_Word imm;
+    int imm;
 
-    JType(const Elf32_Word& cmd);
+    JType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+            const std::vector<SymTableEntry>& functions, const std::string& symbols);
 
     void print();
 
@@ -103,9 +119,10 @@ struct BType : public InstructionType {
     unsigned char rs1;
     unsigned char rs2;
     unsigned char funct3;
-    Elf32_Word imm;
+    int imm;
 
-    BType(const Elf32_Word& cmd);
+    BType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+            const std::vector<SymTableEntry>& functions, const std::string& symbols);
 
     void print();
 

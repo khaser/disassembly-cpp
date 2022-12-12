@@ -1,16 +1,18 @@
 #include "command_types.h"
 
+#include "elfsymbtable.h"
+#include "output_symbtable.h"
 #include "typedefs.h"
 #include <string>
+#include <algorithm>
 #include <vector>
 #include <stdexcept>
 
+namespace {
+
 void extend_sign(int& x, int sz) {
-    for (; sz < 32; ++sz) {
-        if (x & (1ll << sz)) {
-            x |= (1ll << (sz + 1));
-        }
-    }
+    sz = 32 - sz;
+    x = (x << sz) >> sz;
 }
 
 std::string prettify_reg(unsigned char reg) {
@@ -30,8 +32,25 @@ std::string prettify_reg(unsigned char reg) {
     return names[reg];
 }
 
-InstructionType::InstructionType(const Elf32_Word& cmd) {
+}
+
+InstructionType::InstructionType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+    const std::vector<SymTableEntry>& f, const std::string& symbols) 
+    : pc(addr), functions(f), symbols(symbols) {
     opcode = cmd & 0x7f; 
+}
+
+std::string InstructionType::format_addr(const Elf32_Addr& x) {
+    auto it = std::find_if(functions.begin(), functions.end(), 
+            [&] (const SymTableEntry& f) {
+                return f.st_value == x;
+            }
+    );
+    if (it == functions.end()) {
+        return "";
+    } else {
+        return " <" + format_name(it->st_name, symbols) + ">";
+    }
 }
 
 unsigned char InstructionType::get_rd(Elf32_Word x) {
@@ -66,7 +85,9 @@ Elf32_Word InstructionType::get_blk(Elf32_Word x, unsigned char len, unsigned ch
     return (x>>pos)&((1ll << len) - 1);
 }
 
-UType::UType(const Elf32_Word& cmd) : InstructionType(cmd) {
+UType::UType(const Elf32_Word& cmd, const Elf32_Addr& addr, 
+        const std::vector<SymTableEntry>& f, const std::string& symbols) : 
+    InstructionType(cmd, addr, f, symbols) {
     rd = get_rd(cmd);
     imm = get_blk(cmd, 20, 12) << 12;
     cmd_name = (get_cmd(cmd) == LUI ? "lui" : "auipc");
@@ -76,8 +97,9 @@ void UType::print() {
     printf("%7s\t%s, %x", cmd_name.c_str(), prettify_reg(rd).c_str(), imm);
 }
 
-
-RType::RType(const Elf32_Word& cmd) : InstructionType(cmd) {
+RType::RType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+        const std::vector<SymTableEntry>& f, const std::string& symbols) :
+    InstructionType(cmd, addr, f, symbols) {
     rd = get_rd(cmd);
     rs1 = get_rs1(cmd);
     rs2 = get_rs2(cmd);
@@ -116,12 +138,14 @@ void RType::print() {
 }
 
 
-SType::SType(const Elf32_Word& cmd) : InstructionType(cmd) {
+SType::SType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+        const std::vector<SymTableEntry>& f, const std::string& symbols) :
+        InstructionType(cmd, addr, f, symbols) {
     rs1 = get_rs1(cmd);
     rs2 = get_rs2(cmd);
     funct3 = get_funct3(cmd);
     imm = (get_blk(cmd, 7, 25) << 4) | get_blk(cmd, 4, 7);
-    extend_sign(imm, 11);
+    extend_sign(imm, 12);
     switch (funct3) {
         case 0b000: cmd_name = "sb"; break;
         case 0b001: cmd_name = "sh"; break;
@@ -130,21 +154,24 @@ SType::SType(const Elf32_Word& cmd) : InstructionType(cmd) {
 }
 
 void SType::print() {
-    printf("%7s\t%s, %d(%s)", cmd_name.c_str(), prettify_reg(rs2).c_str(), imm,
+    printf("%7s\t%s, %d(%s)", cmd_name.c_str(), prettify_reg(rs2).c_str(), 
+            imm,
             prettify_reg(rs1).c_str());
 }
 
-IType::IType(const Elf32_Word& cmd) : InstructionType(cmd) {
+IType::IType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+        const std::vector<SymTableEntry>& f, const std::string& symbols) :
+        InstructionType(cmd, addr, f, symbols) {
     rd = get_rd(cmd);
     rs1 = get_rs1(cmd);
     funct3 = get_funct3(cmd);
     imm = get_blk(cmd, 12, 20);
-    extend_sign(imm, 11);
+    extend_sign(imm, 12);
     if ((cmd & 0x7f) == EX_CTR) {
         is_exec = true;
         cmd_name = (imm & 1) ? "ebreak" : "ecall";
     } else if (cmd & 0x40) {
-        is_load = true;
+        is_jump = true;
         cmd_name = "jalr";
     } else if (cmd & 0x10) {
         switch (funct3) {
@@ -175,6 +202,9 @@ void IType::print() {
     } else if (is_load) {
         printf("%7s\t%s, %d(%s)", cmd_name.c_str(), prettify_reg(rd).c_str(),
                 imm, prettify_reg(rs1).c_str());
+    } else if (is_jump) {
+        printf("%7s\t%s, %x(%s)", cmd_name.c_str(), prettify_reg(rd).c_str(),
+                imm, prettify_reg(rs1).c_str());
     } else {
         // ARITHI
         printf("%7s\t%s, %s, %d", cmd_name.c_str(), prettify_reg(rd).c_str(), 
@@ -182,20 +212,26 @@ void IType::print() {
     }
 }
 
-JType::JType(const Elf32_Word& cmd) : InstructionType(cmd) {
+JType::JType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+        const std::vector<SymTableEntry>& f, const std::string& symbols) :
+        InstructionType(cmd, addr, f, symbols) {
     rd = get_rd(cmd);
     imm = (get_blk(cmd,  1, 31) << 20) |
           (get_blk(cmd, 10, 21) <<  1) |
           (get_blk(cmd,  1, 20) << 11) |
           (get_blk(cmd,  8, 12) << 12);
+    extend_sign(imm, 21);
     cmd_name = "jal";
 }
 
 void JType::print() {
-    printf("%7s\t%s, %x", cmd_name.c_str(), prettify_reg(rd).c_str(), imm);
+    printf("%7s\t%s, 0x%x", cmd_name.c_str(), prettify_reg(rd).c_str(), imm + pc);
+    printf("%s", format_addr(imm + pc).c_str()); 
 }
 
-BType::BType(const Elf32_Word& cmd) : InstructionType(cmd) {
+BType::BType(const Elf32_Word& cmd, const Elf32_Addr& addr,
+        const std::vector<SymTableEntry>& f, const std::string& symbols) :
+        InstructionType(cmd, addr, f, symbols) {
     rs1 = get_rs1(cmd);
     rs2 = get_rs2(cmd);
     funct3 = get_funct3(cmd);
@@ -203,6 +239,7 @@ BType::BType(const Elf32_Word& cmd) : InstructionType(cmd) {
           (get_blk(cmd, 6, 25) <<  5) |
           (get_blk(cmd, 4,  8) <<  1) |
           (get_blk(cmd, 1,  7) << 11);
+    extend_sign(imm, 13);
     switch (funct3) {
         case 0b000: cmd_name = "beq"; break;
         case 0b001: cmd_name = "bne"; break;
@@ -214,7 +251,8 @@ BType::BType(const Elf32_Word& cmd) : InstructionType(cmd) {
 }
 
 void BType::print() {
-    printf("%7s\t%s, %s, %x", cmd_name.c_str(), prettify_reg(rs2).c_str(), 
-            prettify_reg(rs1).c_str(), imm);
+    printf("%7s\t%s, %s, 0x%x", cmd_name.c_str(), prettify_reg(rs2).c_str(), 
+            prettify_reg(rs1).c_str(), imm + pc);
+    printf("%s", format_addr(imm + pc).c_str()); 
 }
 

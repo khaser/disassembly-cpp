@@ -29,7 +29,7 @@ void print_code(
 
     for (size_t i = 0; i < code.size(); i += 4, v_addr += 4) {
         if (it->st_value == v_addr) {
-            printf("%08x <%s>:\n", 
+            printf("%08x   <%s>:\n", 
                     it->st_value, format_name(it->st_name, symbols).c_str());
             it++;
         }
@@ -41,18 +41,18 @@ void print_code(
         unsigned char opcode = cmd & 0x7f;
         InstructionType* parsed_cmd = nullptr;
         if (opcode == LUI || opcode == AUIPC) {
-            parsed_cmd = new UType(cmd);
+            parsed_cmd = new UType(cmd, v_addr, functions, symbols);
         } else if (opcode == ARITH) {
-            parsed_cmd = new RType(cmd);
+            parsed_cmd = new RType(cmd, v_addr, functions, symbols);
         } else if (opcode == STORE) {
-            parsed_cmd = new SType(cmd);
+            parsed_cmd = new SType(cmd, v_addr, functions, symbols);
         } else if (opcode == EX_CTR || opcode == ARITHI || opcode == LOAD ||
                 opcode == JALR) {
-            parsed_cmd = new IType(cmd);
+            parsed_cmd = new IType(cmd, v_addr, functions, symbols);
         } else if (opcode == BRANCH) {
-            parsed_cmd = new BType(cmd);
+            parsed_cmd = new BType(cmd, v_addr, functions, symbols);
         } else if (opcode == JAL) {
-            parsed_cmd = new JType(cmd);
+            parsed_cmd = new JType(cmd, v_addr, functions, symbols);
         }
 
         if (parsed_cmd != nullptr) {
