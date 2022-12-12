@@ -21,6 +21,7 @@
 \usepackage{enumitem}
 \usepackage{xparse}
 \usepackage{etoolbox}
+\usepackage{array}
 
 % FONTS XeLaTeX
 \usepackage[no-math]{fontspec}
@@ -103,6 +104,34 @@
     urlcolor=blue,
 }
 
+\newcolumntype{I}{>{\centering\arraybackslash}p{0.18in}}
+% Two-bit centered column.
+\newcolumntype{W}{>{\centering\arraybackslash}p{0.36in}}
+% Three-bit centered column.
+\newcolumntype{F}{>{\centering\arraybackslash}p{0.54in}}
+% Four-bit centered column.
+\newcolumntype{Y}{>{\centering\arraybackslash}p{0.72in}}
+% Five-bit centered column.
+\newcolumntype{R}{>{\centering\arraybackslash}p{0.9in}}
+% Six-bit centered column.
+\newcolumntype{S}{>{\centering\arraybackslash}p{1.08in}}
+% Seven-bit centered column.
+\newcolumntype{O}{>{\centering\arraybackslash}p{1.26in}}
+% Eight-bit centered column.
+\newcolumntype{E}{>{\centering\arraybackslash}p{1.44in}}
+% Ten-bit centered column.
+\newcolumntype{T}{>{\centering\arraybackslash}p{1.8in}}
+% Twelve-bit centered column.
+\newcolumntype{M}{>{\centering\arraybackslash}p{2.2in}}
+% Sixteen-bit centered column.
+\newcolumntype{K}{>{\centering\arraybackslash}p{2.88in}}
+% Twenty-bit centered column.
+\newcolumntype{U}{>{\centering\arraybackslash}p{3.6in}}
+% Twenty-bit centered column.
+\newcolumntype{L}{>{\centering\arraybackslash}p{3.6in}}
+% Twenty-five-bit centered column.
+\newcolumntype{J}{>{\centering\arraybackslash}p{4.5in}}
+
 % START
 \begin{document}
 \begin{tabular}{|p{8cm}|p{3cm}|p{3cm}|}
@@ -167,7 +196,7 @@ ISA отличаются главным образом количеством и
 \newcommand{\instbit}[1]{\mbox{\scriptsize #1}}
 \newcommand{\instbitrange}[2]{~\instbit{#1} \hfill \instbit{#2}~}
 \begin{figure}[h]
-\begin{small} \begin{center} \setlength{\tabcolsep}{4pt} \begin{tabular}{p{0.3in}@{}p{0.8in}@{}p{0.6in}@{}p{0.18in}@{}p{0.7in}@{}p{0.6in}@{}p{0.6in}@{}p{0.3in}@{}p{0.5in}l} \\ \multicolumn{1}{c}{\instbit{31}} & \instbitrange{30}{25} & \instbitrange{24}{21} & \multicolumn{1}{c}{\instbit{20}} & \instbitrange{19}{15} & \instbitrange{14}{12} & \instbitrange{11}{8} & \multicolumn{1}{c}{\instbit{7}} & \instbitrange{6}{0} \\ \cline{1-9} \multicolumn{2}{|c|}{funct7} & \multicolumn{2}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & R-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{4}{|c|}{imm[11:0]} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & I-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{2}{|c|}{imm[11:5]} & \multicolumn{2}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{2}{c|}{imm[4:0]} & \multicolumn{1}{c|}{opcode} & S-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{1}{|c|}{imm[12]} & \multicolumn{1}{c|}{imm[10:5]} & \multicolumn{2}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{1}{c|}{imm[4:1]} & \multicolumn{1}{c|}{imm[11]} & \multicolumn{1}{c|}{opcode} & B-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{6}{|c|}{imm[31:12]} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & U-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{1}{|c|}{imm[20]} & \multicolumn{2}{c|}{imm[10:1]} & \multicolumn{1}{c|}{imm[11]} & \multicolumn{2}{c|}{imm[19:12]} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & J-type \\ \cline{1-9} \end{tabular} \end{center} \end{small} \caption{Виды инструкций RISC-V} \label{fig:baseinstformatsimm}
+\begin{small} \begin{center} \setlength{\tabcolsep}{4pt} \begin{tabular}{p{0.3in}@{}p{0.8in}@{}p{0.6in}@{}p{0.18in}@{}p{0.7in}@{}p{0.6in}@{}p{0.6in}@{}p{0.3in}@{}p{0.5in}l} \\ \multicolumn{1}{c}{\instbit{31}} & \instbitrange{30}{25} & \instbitrange{24}{21} & \multicolumn{1}{c}{\instbit{20}} & \instbitrange{19}{15} & \instbitrange{14}{12} & \instbitrange{11}{8} & \multicolumn{1}{c}{\instbit{7}} & \instbitrange{6}{0} \\ \cline{1-9} \multicolumn{2}{|c|}{funct7} & \multicolumn{2}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & R-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{4}{|c|}{imm[11:0]} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & I-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{2}{|c|}{imm[11:5]} & \multicolumn{2}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{2}{c|}{imm[4:0]} & \multicolumn{1}{c|}{opcode} & S-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{1}{|c|}{imm[12]} & \multicolumn{1}{c|}{imm[10:5]} & \multicolumn{2}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{1}{c|}{imm[4:1]} & \multicolumn{1}{c|}{imm[11]} & \multicolumn{1}{c|}{opcode} & B-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{6}{|c|}{imm[31:12]} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & U-type \\ \cline{1-9} \\ \cline{1-9} \multicolumn{1}{|c|}{imm[20]} & \multicolumn{2}{c|}{imm[10:1]} & \multicolumn{1}{c|}{imm[11]} & \multicolumn{2}{c|}{imm[19:12]} & \multicolumn{2}{c|}{rd} & \multicolumn{1}{c|}{opcode} & J-type \\ \cline{1-9} \end{tabular} \end{center} \end{small}  \label{fig:baseinstformatsimm}
 \end{figure}
 
 Заметим, что типы U,J и B,S почти совпадают. Они существуют для кодирования
@@ -189,10 +218,143 @@ ISA отличаются главным образом количеством и
 виде не делает это одновременно.
 
 \subsection*{Целочисленные арифметические инструкции}
-% TODO
+Арифметические команды по структуре делятся на два типа: на операции
+с двумя регистрами(Register-Register) и на операции с регистром и некоторой 
+константой(Register-Immediate), которые имеют в конце своего называния I. Таким 
+образом, большинство арифметических операций встречается в двух вариациях. 
+\paragraph*{Register-Immediate}
+Начнём с рассмотрения Register-Immediate операций. Схематично она
+имеет следующий вид:
+\begin{center} \begin{tabular}{M@{}R@{}S@{}R@{}O} \\ \instbitrange{31}{20} & \instbitrange{19}{15} & \instbitrange{14}{12} & \instbitrange{11}{7} & \instbitrange{6}{0} \\ \hline \multicolumn{1}{|c|}{imm[11:0]} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{1}{c|}{rd} & \multicolumn{1}{c|}{opcode} \\ \hline 12 & 5 & 3 & 5 & 7 \\ I-immediate[11:0] & src & ADDI/SLTI[U]  & dest & OP-IMM \\ I-immediate[11:0] & src & ANDI/ORI & dest & OP-IMM \\ \end{tabular} \end{center}
+Данная команда задаёт запись результата некоторой бинарный операции 
+заданной в поле funct3 от содержимого регистра rs1 и некоторого числа imm
+в регистр rd. Отметим, что всего регистров в нашей архитектуре 32, поэтому для 
+кодирования rs1 и rd достаточно 5 бит. Стоит отметить, что 12 битное число imm 
+является знаковым и закодировано при помощи дополнения до степени двойки,
+поэтому при написании докомпилятора приходится проделать некоторую дополнительную
+работу, называемую sign extension для аккуратной конвертации его в int32 с 
+сохранением ожидаемого значения и знака.
+\begin{minted}{cpp}
+void extend_sign(int& x, int sz) {
+    for (; sz < 32; ++sz) {
+        if (x & (1ll << sz)) {
+            x |= (1ll << (sz + 1));
+        }
+    }
+}
+\end{minted}
+В качестве бинарной операции в ISA RV32I могут быть задействованы следующие
+функции(рассмотрим на примере команд Register-Immediate):
+\begin{itemize}
+    \item ADDI~--- сложение
+    \item SLTI~--- проверка простейшего неравенства: rs1 < imm
+    \item SLTIU~--- проверка простейшего равенства: rs1 = imm
+    \item ANDI~--- побитовое И
+    \item ORI~--- побитовое ИЛИ
+    \item XORI~--- побитовое Исключающее ИЛИ
+    \item Различные битовые сдвиги: SLLI, SRLI, SRAI. Левый логический, правый
+        логический и правый алгебраический соответственно.
+        Команда подразумевает сдвиг значения регистра rs1 на imm.
+        Отдельно стоит отметить, что кодирования этих сдвигов SRLI и SRAI
+        используется одна и та же комбинация opcode, funct3, но они
+        всё равно отличимы, так как imm в данной операции не может
+        быть более 32, то старшие биты imm никак не используются, а это значит
+        можно использовать их для различия этих двух видов сдвига.
+\end{itemize}
+
+\paragraph*{Register-Register}
+Для начала рассмотрим принцип кодирования данного вида инструкций.
+Схематично это выглядит следующим образом:
+\begin{center} \begin{tabular}{S@{}R@{}R@{}S@{}R@{}O} \\ \instbitrange{31}{25} & \instbitrange{24}{20} & \instbitrange{19}{15} & \instbitrange{14}{12} & \instbitrange{11}{7} & \instbitrange{6}{0} \\ \hline \multicolumn{1}{|c|}{funct7} & \multicolumn{1}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{1}{c|}{rd} & \multicolumn{1}{c|}{opcode} \\ \hline 7 & 5 & 5 & 3 & 5 & 7 \\ 0000000 & src2 & src1 & ADD/SLT[U]  & dest & OP    \\ 0000000 & src2 & src1 & AND/OR/XOR  & dest & OP    \\ 0000000 & src2 & src1 & SLL/SRL     & dest & OP    \\ 0100000 & src2 & src1 & SUB/SRA     & dest & OP    \\ \end{tabular} \end{center}
+Заметим, что за счёт того, что второй регистр rs2 закодировать проще, чем
+значение imm, то в этом виде команд у нас всегда есть свободные для кодирования
+старшие байты, которые на схемы выше названы funct7.
+
+Как следствие большего количества бит на кодирование команд, в Register-Register
+набор бинарных операций включает в себя аналоги всех операций из Register-Immediate
+и добавляет к ним ещё SUB(вычитание). Отдельно стоит отметить, что для
+операций SLL, SRL, SRA в качестве размера сдвига берутся младшие 5 бит регистра rs2.
+
+\subsection*{Расширение RV32M}
+Данное расширение стандарта расширяет арифметические команды следующим
+набором, которые кодируются аналогичным Register-Register арифметике:
+\begin{itemize}
+    \item MUL~--- умножение в результате которого младшие биты результата
+        будут помещены в rd
+    \item MULH~--- аналог команды MUL, но в rd будут записаны 
+        старшие биты умножения в предположении, что оба числа знаковые.
+    \item MULHSU~--- аналог MULH, но предполагает, что оба числа беззнаковые.
+    \item MULHU~--- аналог MULH, но предполагает, что rd1 знаковое, а rd2~--- нет.
+    \item DIV~-- деление чисел с знаком с округлением к нулю
+    \item DIVU~--- деление чисел без знака с округлением к нулю
+    \item REM~--- нахождение остатка от деления знаковых чисел. Знак результата
+        совпадает со знаком rs1(то есть делимого).
+    \item REMU~--- аналог REM для чисел без знака.
+\end{itemize}
+Поведение при делении на ноль указано в спецификации и задаётся следующим
+образом:
+\begin{table}[h] \center \begin{tabular}{|l|c|c||c|c|c|c|} \hline Condition              & Dividend   & Divisor & DIVU[W]   & REMU[W] & DIV[W]     & REM[W] \\ \hline Division by zero       & $x$        & 0       & $2^{L}-1$ & $x$     & $-1$       & $x$    \\ Overflow (signed only) & $-2^{L-1}$ & $-1$    & --        & --      & $-2^{L-1}$ & 0      \\ \hline \end{tabular} \end{table}
+
+\subsection*{Special}
+Далее будут перечислены команды LUI и AUIPC, которые я не смог явно выделить не в один
+из других типов. Обе эти инструкции кодируются в U типе, то есть следующим
+образом:
+\begin{center} \begin{tabular}{U@{}R@{}O} \\ \instbitrange{31}{12} & \instbitrange{11}{7} & \instbitrange{6}{0} \\ \hline \multicolumn{1}{|c|}{imm[31:12]} & \multicolumn{1}{c|}{rd} & \multicolumn{1}{c|}{opcode} \\ \hline 20 & 5 & 7 \\ U-immediate[31:12] & dest & LUI \\ U-immediate[31:12] & dest & AUIPC \end{tabular} \end{center}
+
+LUI rd imm записывает в регистр rd значение константы imm. Стоит обратить
+внимание на то, что команда задаёт у imm 20 старших бита, остальные 12 
+младших байт заполняются нулями. Данная инструкция необходима для быстрой
+загрузки в регистр 32 битных констант явным образом. 
+
+AUIPC rd imm записывает в регистр rd адрес инструкции, которая находится 
+на смещении imm от текущей(той, которая хранится в pc). Использование
+данной команды в сочетании с JALR может позволять задавать произвольный 
+32 битный относительное смещение относительно текущего pc.
 
 \subsection*{Инструкции управления исполнения}
-% TODO
+\paragraph*{Безусловные переходы}
+В данной архитектуре реализовано 2 безусловных перехода: JAL и JALR. Первый
+из которых кодируется в J type, а второй в I type. 
+
+JAL работает следующим
+образом. В imm с 1 по 20 бит кодируется смещение относительно адреса текущей
+команды pc(смещение конечно же со знаком, нулевой бит imm равен 0, так как
+размер наших команд кратен 2, а значит последний бит можно сэкономить),
+после чего совершается переход на указанное смещение imm и в rd записывается
+адрес newpc + 4, то есть адрес инструкции, которая будет выполнена через
+одну после перехода.
+\begin{center} \begin{tabular}{W@{}E@{}W@{}R@{}R@{}O} \\ \multicolumn{1}{c}{\instbit{31}} & \instbitrange{30}{21} & \multicolumn{1}{c}{\instbit{20}} & \instbitrange{19}{12} & \instbitrange{11}{7} & \instbitrange{6}{0} \\ \hline \multicolumn{1}{|c|}{imm[20]} & \multicolumn{1}{c|}{imm[10:1]} & \multicolumn{1}{c|}{imm[11]} & \multicolumn{1}{c|}{imm[19:12]} & \multicolumn{1}{c|}{rd} & \multicolumn{1}{c|}{opcode} \\ \hline 1 & 10 & \multicolumn{1}{c}{1} & 8 & 5 & 7 \\ \multicolumn{4}{c}{offset[20:1]} & dest & JAL \\ \end{tabular} \end{center}
+
+Поведение JALR отличается лишь способом кодирования адреса для перемещения.
+В этом случае оно вычисляется как rs1 + imm, причём imm уже 
+задан с нулевого байта(так как о значении в rs1 мы ничего не знаем и может
+понадобится сместиться на нечётное количество байт). 
+
+\begin{center} \begin{tabular}{M@{}R@{}F@{}R@{}O} \\ \instbitrange{31}{20} & \instbitrange{19}{15} & \instbitrange{14}{12} & \instbitrange{11}{7} & \instbitrange{6}{0} \\ \hline \multicolumn{1}{|c|}{imm[11:0]} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{1}{c|}{rd} & \multicolumn{1}{c|}{opcode} \\ \hline 12 & 5 & 3 & 5 & 7 \\ offset[11:0] & base & 0 & dest & JALR \\ \end{tabular} \end{center}
+
+\paragraph*{Условные переходы}
+Условные переходы в отличии от безусловных в нашей архитектуре все относительны
+текущей инструкции и кодируются в B type.
+
+\begin{center} \begin{tabular}{W@{}R@{}F@{}F@{}R@{}R@{}F@{}S} \\ \multicolumn{1}{c}{\instbit{31}} & \instbitrange{30}{25} & \instbitrange{24}{20} & \instbitrange{19}{15} & \instbitrange{14}{12} & \instbitrange{11}{8} & \multicolumn{1}{c}{\instbit{7}} & \instbitrange{6}{0} \\ \hline \multicolumn{1}{|c|}{imm[12]} & \multicolumn{1}{c|}{imm[10:5]} & \multicolumn{1}{c|}{rs2} & \multicolumn{1}{c|}{rs1} & \multicolumn{1}{c|}{funct3} & \multicolumn{1}{c|}{imm[4:1]} & \multicolumn{1}{c|}{imm[11]} & \multicolumn{1}{c|}{opcode} \\ \hline 1 & 6 & 5 & 5 & 3 & 4 & 1 & 7 \\ \multicolumn{2}{c}{offset[12$\vert$10:5]} & src2 & src1 & BEQ/BNE & \multicolumn{2}{c}{offset[11$\vert$4:1]} & BRANCH \\ \end{tabular} \end{center}
+К тому же, как следствие того, что приходится кодировать ещё 
+целых два регистра, на которые будет накладываться условие перехода,
+диапазон смещения достаточно маленький, всего $\pm$4KiB.
+Но из-за того, что все переходы относительны текущей позиции, то 
+можно не кодировать последний бит смещения.
+% TODO branch prediction???
+\begin{enumerate}
+    \item BEQ~--- совершает переход, если rs1 = rs2
+    \item BNE~--- совершает переход, если rs1 $\not=$ rs2
+    \item BLT~--- совершает переход, если rs1 < rs2 причём оба числа 
+        воспринимаются как знаковые. 
+    \item BGE~--- совершает переход, если rs1 > rs2 причём оба числа 
+        воспринимаются как знаковые. 
+    \item BLTU~--- совершает переход, если rs1 < rs2 причём оба числа 
+        воспринимаются как беззнаковые. 
+    \item BGEU~--- совершает переход, если rs1 > rs2 причём оба числа 
+        воспринимаются как беззнаковые. 
+\end{enumerate}
 
 \subsection*{Инструкции для работы с памятью}
 % TODO
@@ -201,9 +363,6 @@ ISA отличаются главным образом количеством и
 % TODO
 
 \subsection*{Инструкции-подсказки исполнения}
-% TODO
-
-\subsection*{Расширение RV32M}
 % TODO
 
 % Общее описание структуры ELF файлов. Подробно стоит расписать только те
@@ -352,8 +511,9 @@ ELF(Executable and Linkable Format)~--- бинарный формат файла
 
 \section*{Листинг кода}
 
+\inputAllFiles{../include}{h}
+
 \inputAllFiles{../src}{cpp}
 
-\inputAllFiles{../include}{h}
 
 \end{document}

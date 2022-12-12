@@ -4,3 +4,4 @@ compile_commands.json
 test_elf
 .cache
 output.dump
+riscv_spec_repo
